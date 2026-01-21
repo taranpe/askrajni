@@ -21,7 +21,9 @@ async function getBanners() {
       console.error("Failed to fetch banners, status:", res.status);
       return [];
     }
-    return res.json();
+    const json = await res.json();
+    // Make sure it's an array
+    return Array.isArray(json.data) ? json.data : [];
   } catch (err) {
     console.error("Failed to fetch banners:", err);
     return [];
@@ -31,14 +33,16 @@ async function getBanners() {
 // Fetch services
 async function getServices() {
   try {
-    const res = await fetch(`${getBaseUrl()}/api/services`, { cache: "no-store" });
+    const res = await fetch(`${getBaseUrl()}/api/services/4`, { cache: "no-store" });
     if (!res.ok) {
-      console.error("Failed to fetch services, status:", res.status);
+      console.error("Failed to fetch service, status:", res.status);
       return [];
     }
-    return res.json();
+    const json = await res.json();
+    // Wrap single service object in array so .map works
+    return json.success && json.data ? [json.data] : [];
   } catch (err) {
-    console.error("Failed to fetch services:", err);
+    console.error("Failed to fetch service:", err);
     return [];
   }
 }
@@ -47,9 +51,11 @@ export default async function HomePage() {
   const banners = await getBanners();
   const services = await getServices();
 
+  console.log("Fetched services:", services); // debug log
+
   return (
     <main style={{ padding: "20px" }}>
-      <HeroBuyOne banners={banners || []} />
+      <HeroBuyOne banners={banners} />
 
       <h2>Services</h2>
       {(!services || services.length === 0) && <p>No services found</p>}
@@ -57,10 +63,12 @@ export default async function HomePage() {
       {services?.map((item: any) => (
         <div key={item.id}>
           <h3>{item.title}</h3>
+          <p>{item.description}</p>
+          <p>Price: ₹{item.price}</p>
         </div>
       ))}
 
-      <ServicesSection services={services || []} />
+      <ServicesSection services={services} />
     </main>
   );
 }
