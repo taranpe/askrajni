@@ -20,7 +20,6 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
   const increaseQty = () => setQuantity((q) => q + 1);
   const decreaseQty = () => quantity > 1 && setQuantity((q) => q - 1);
 
-  // 👉 BUY NOW FUNCTION
   const handleBuyNow = () => {
     router.push(`/checkout?serviceId=${service.id}&qty=${quantity}`);
   };
@@ -34,7 +33,7 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
         display: "flex",
         gap: "60px",
         alignItems: "flex-start",
-        flexWrap: "nowrap",
+        flexWrap: "wrap",
       }}
     >
       {/* ================= LEFT IMAGE ================= */}
@@ -148,6 +147,7 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
             gap: "20px",
             alignItems: "stretch",
             justifyContent: "space-between",
+            flexWrap: "wrap",
           }}
         >
           <InfoItem
@@ -207,15 +207,7 @@ const buyNowBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-function InfoItem({
-  img,
-  title,
-  text,
-}: {
-  img: string;
-  title: string;
-  text: string;
-}) {
+function InfoItem({ img, title, text }: { img: string; title: string; text: string }) {
   return (
     <div
       style={{
