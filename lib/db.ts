@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+export const dynamic = "force-dynamic";
 
 export const db = mysql.createPool({
   host: process.env.DB_HOST!,
