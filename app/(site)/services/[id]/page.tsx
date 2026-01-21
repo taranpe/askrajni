@@ -27,27 +27,35 @@ export default async function ServiceDetailPage(props: { params: Promise<Params>
     );
   }
 
-  const res = await fetch(`http://localhost:3000/api/services/${id}`, {
-    cache: "no-store",
-  });
+  try {
+    // ✅ Use relative URL instead of localhost
+    const res = await fetch(`/api/services/${id}`, { cache: "no-store" });
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return (
+        <div style={{ padding: "40px", textAlign: "center" }}>
+          <h2>Service not found</h2>
+        </div>
+      );
+    }
+
+    const service: Service = await res.json();
+
+    if (!service || !service.image_url) {
+      return (
+        <div style={{ padding: "40px", textAlign: "center" }}>
+          <h2>Service data is invalid</h2>
+        </div>
+      );
+    }
+
+    return <ServiceDetailClient service={service} />;
+  } catch (err) {
+    console.error("Failed to fetch service:", err);
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
-        <h2>Service not found</h2>
+        <h2>Error fetching service</h2>
       </div>
     );
   }
-
-  const service: Service = await res.json();
-
-  if (!service || !service.image_url) {
-    return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
-        <h2>Service data is invalid</h2>
-      </div>
-    );
-  }
-
-  return <ServiceDetailClient service={service} />;
 }
