@@ -1,19 +1,40 @@
 import HeroBuyOne from "@/components/home/HeroBuyOne";
 import ServicesSection from "@/components/home/ServicesSection";
-import { db } from "@/lib/db"; // your MySQL connection
+
 export const dynamic = "force-dynamic";
 
+// fetch from API route instead of direct DB
+async function getBanners() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/banners`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch (err) {
+    console.error("Failed to fetch banners:", err);
+    return [];
+  }
+}
+
+async function getServices() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/services`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch (err) {
+    console.error("Failed to fetch services:", err);
+    return [];
+  }
+}
 
 export default async function HomePage() {
-  // Fetch banners
-  const [banners]: any = await db.query(
-    "SELECT * FROM banners WHERE is_active = 1 ORDER BY id DESC"
-  );
-
-  // Fetch services
-  const [services]: any = await db.query(
-    "SELECT * FROM services WHERE is_active = 1 ORDER BY id DESC"
-  );
+  const banners = await getBanners();
+  const services = await getServices();
 
   return (
     <>
