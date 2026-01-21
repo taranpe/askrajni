@@ -1,22 +1,25 @@
+import { headers } from "next/headers";
+
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: { id: string };
 }
 
-// Helper to get absolute URL
-function getBaseUrl() {
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
+// ✅ Correct base URL (async headers)
+async function getBaseUrlFromHeaders() {
+  const headersList = await headers(); // 👈 FIX HERE
+  const host = headersList.get("host");
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  return `${protocol}://${host}`;
 }
 
-// ✅ Fetch SINGLE service by ID
 async function getService(id: string) {
   try {
+    const baseUrl = await getBaseUrlFromHeaders();
+
     const res = await fetch(
-      `${getBaseUrl()}/api/services/${id}`,
+      `${baseUrl}/api/services/${id}`,
       { cache: "no-store" }
     );
 
@@ -34,7 +37,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const service = await getService(params.id);
 
   if (!service) {
-    return <p style={{ padding: 20 }}>Error fetching service</p>;
+    return (
+      <main style={{ padding: 20 }}>
+        <h2>Error fetching service</h2>
+      </main>
+    );
   }
 
   return (
