@@ -14,10 +14,15 @@ interface Service {
   discount?: string;
   description?: string;
 }
+
 export const dynamic = "force-dynamic";
-export default async function ServiceDetailPage(props: { params: Promise<Params> }) {
-  // ✅ Unwrap the async params
-  const { id } = await props.params;
+
+export default async function ServiceDetailPage({
+  params,
+}: {
+  params: Params;
+}) {
+  const { id } = params;
 
   if (!id) {
     return (
@@ -28,8 +33,11 @@ export default async function ServiceDetailPage(props: { params: Promise<Params>
   }
 
   try {
-    // ✅ Use relative URL instead of localhost
-    const res = await fetch(`/api/services/${id}`, { cache: "no-store" });
+    // ✅ MUST use absolute URL on Vercel
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/services/${id}`,
+      { cache: "no-store" }
+    );
 
     if (!res.ok) {
       return (
@@ -39,7 +47,8 @@ export default async function ServiceDetailPage(props: { params: Promise<Params>
       );
     }
 
-    const service: Service = await res.json();
+    const json = await res.json();
+    const service: Service = json.data;
 
     if (!service || !service.image_url) {
       return (
@@ -50,8 +59,8 @@ export default async function ServiceDetailPage(props: { params: Promise<Params>
     }
 
     return <ServiceDetailClient service={service} />;
-  } catch (err) {
-    console.error("Failed to fetch service:", err);
+  } catch (error) {
+    console.error("Failed to fetch service:", error);
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         <h2>Error fetching service</h2>
