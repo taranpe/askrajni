@@ -15,7 +15,7 @@ interface Service {
 interface ServicesSectionProps {
   services: Service[];
 }
-
+export const dynamic = "force-dynamic";
 export default function ServicesSection({ services }: ServicesSectionProps) {
   const router = useRouter();
   if (!services || !services.length) return null;

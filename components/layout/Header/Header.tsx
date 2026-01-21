@@ -25,7 +25,7 @@ const NAV_LINKS = [
   { name: "About Us", href: "/about" },
   { name: "Blog", href: "/blog" },
 ];
-
+export const dynamic = "force-dynamic";
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 

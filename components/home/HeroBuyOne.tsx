@@ -1,5 +1,6 @@
 "use client";
 
+
 import Slider from "react-slick";
 import Image from "next/image";
 
@@ -12,7 +13,7 @@ interface Banner {
 interface HeroBuyOneProps {
   banners: Banner[];
 }
-
+export const dynamic = "force-dynamic";
 export default function HeroBuyOne({ banners }: HeroBuyOneProps) {
   const desktop = banners.filter((b) => b.banner_type === "desktop");
   const mobile = banners.filter((b) => b.banner_type === "mobile");

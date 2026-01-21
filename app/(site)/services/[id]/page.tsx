@@ -14,7 +14,7 @@ interface Service {
   discount?: string;
   description?: string;
 }
-
+export const dynamic = "force-dynamic";
 export default async function ServiceDetailPage(props: { params: Promise<Params> }) {
   // ✅ Unwrap the async params
   const { id } = await props.params;

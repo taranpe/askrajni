@@ -1,4 +1,5 @@
 import BannerForm from "@/components/admin/BannerForm";
+export const dynamic = "force-dynamic";
 
 export default function BannerPage() {
   return (

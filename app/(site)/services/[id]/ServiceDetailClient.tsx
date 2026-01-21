@@ -12,7 +12,7 @@ interface Service {
   discount?: string;
   description?: string;
 }
-
+export const dynamic = "force-dynamic";
 export default function ServiceDetailClient({ service }: { service: Service }) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();

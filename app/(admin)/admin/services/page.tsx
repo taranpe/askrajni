@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ServiceForm from "@/components/admin/ServiceForm";
 import ServiceTable from "@/components/admin/ServiceTable";
+export const dynamic = "force-dynamic";
 
 export default function ServicesPage() {
   const [services, setServices] = useState<any[]>([]);
