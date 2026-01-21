@@ -1,6 +1,8 @@
 import HeroBuyOne from "@/components/home/HeroBuyOne";
 import ServicesSection from "@/components/home/ServicesSection";
 import { db } from "@/lib/db"; // your MySQL connection
+export const dynamic = "force-dynamic";
+
 
 export default async function HomePage() {
   // Fetch banners
