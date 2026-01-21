@@ -1,10 +1,6 @@
 // app/(site)/services/[id]/page.tsx
 import ServiceDetailClient from "./ServiceDetailClient";
 
-interface Params {
-  id: string;
-}
-
 interface Service {
   id: number;
   title: string;
@@ -18,12 +14,10 @@ interface Service {
 export const dynamic = "force-dynamic";
 
 export default async function ServiceDetailPage({
-  params,
+  params: { id },
 }: {
-  params: Params;
+  params: { id: string };
 }) {
-  const { id } = params;
-
   if (!id) {
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
@@ -33,7 +27,6 @@ export default async function ServiceDetailPage({
   }
 
   try {
-    // ✅ MUST use absolute URL on Vercel
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}/api/services/${id}`,
       { cache: "no-store" }
@@ -50,17 +43,17 @@ export default async function ServiceDetailPage({
     const json = await res.json();
     const service: Service = json.data;
 
-    if (!service || !service.image_url) {
+    if (!service) {
       return (
         <div style={{ padding: "40px", textAlign: "center" }}>
-          <h2>Service data is invalid</h2>
+          <h2>Service data invalid</h2>
         </div>
       );
     }
 
     return <ServiceDetailClient service={service} />;
   } catch (error) {
-    console.error("Failed to fetch service:", error);
+    console.error("Service fetch failed:", error);
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         <h2>Error fetching service</h2>
