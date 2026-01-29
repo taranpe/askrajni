@@ -14,9 +14,21 @@ export default function AdminLayout({
   const menu = [
     { name: "Dashboard", href: "/admin" },
     { name: "Banners", href: "/admin/banners" },
-    { name: "Services", href: "/admin/services" },
-
+    { name: "Products", href: "/admin/services" },
+    { name: "Collections", href: "/admin/collections" },
   ];
+
+  function isActive(href: string) {
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
+  }
+
+  function getTitle() {
+    if (pathname.startsWith("/admin/services")) return "Service Management";
+    if (pathname.startsWith("/admin/collections")) return "Collection Management";
+    if (pathname.startsWith("/admin/banners")) return "Banner Management";
+    return "Dashboard";
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-100 text-gray-800">
@@ -35,23 +47,20 @@ export default function AdminLayout({
 
         {/* Menu */}
         <nav className="flex-1 px-4 py-6 space-y-1">
-          {menu.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`block rounded-lg px-4 py-2 text-sm transition-all
-                  ${
-                    active
-                      ? "bg-white text-slate-900 font-medium"
-                      : "text-gray-300 hover:bg-white/10 hover:text-white"
-                  }`}
-              >
-                {item.name}
-              </Link>
-            );
-          })}
+          {menu.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`block rounded-lg px-4 py-2 text-sm transition-all
+                ${
+                  isActive(item.href)
+                    ? "bg-white text-slate-900 font-medium"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
+                }`}
+            >
+              {item.name}
+            </Link>
+          ))}
         </nav>
 
         {/* Sidebar footer */}
@@ -66,7 +75,7 @@ export default function AdminLayout({
         {/* Top bar */}
         <header className="h-14 bg-white border-b flex items-center justify-between px-6">
           <h1 className="text-sm font-medium text-gray-600">
-            {pathname === "/admin" ? "Dashboard" : "Banner Management"}
+            {getTitle()}
           </h1>
 
           <button className="text-sm text-red-500 hover:underline">

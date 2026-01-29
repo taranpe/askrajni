@@ -3,11 +3,20 @@ import fs from "fs";
 import path from "path";
 import { db } from "@/lib/db";
 
+/* ===================== GET ===================== */
 export async function GET() {
   try {
-    const [rows]: any = await db.query(
-      "SELECT * FROM services WHERE is_active = 1 ORDER BY id DESC"
-    );
+    const [rows]: any = await db.query(`
+      SELECT 
+        services.*,
+        collections.name AS collection_name
+      FROM services
+      LEFT JOIN collections 
+        ON services.collection_id = collections.id
+      WHERE services.is_active = 1
+      ORDER BY services.id DESC
+    `);
+
     return NextResponse.json(rows);
   } catch (e) {
     console.error(e);
@@ -15,6 +24,7 @@ export async function GET() {
   }
 }
 
+/* ===================== POST ===================== */
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -23,8 +33,9 @@ export async function POST(req: Request) {
     const price = formData.get("price");
     const old_price = formData.get("old_price");
     const discount = formData.get("discount");
-    const description = formData.get("description");  
-    
+    const description = formData.get("description");
+    const collection_id = formData.get("collection_id"); // ✅ NEW
+
     const image = formData.get("image") as File;
 
     if (!title || !price || !image) {
@@ -38,14 +49,25 @@ export async function POST(req: Request) {
     const uploadDir = path.join(process.cwd(), "public/uploads");
     const uploadPath = path.join(uploadDir, fileName);
 
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
     fs.writeFileSync(uploadPath, buffer);
 
     await db.query(
-      `INSERT INTO services (title, image_url, price, old_price, discount, description, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, 1)`,
-      [title, `/uploads/${fileName}`, price, old_price, discount, description] // ✅ description included
+      `INSERT INTO services 
+      (title, image_url, price, old_price, discount, description, collection_id, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [
+        title,
+        `/uploads/${fileName}`,
+        price,
+        old_price,
+        discount,
+        description,
+        collection_id || null, // ✅ safe
+      ]
     );
 
     return NextResponse.json({ success: true });
@@ -55,40 +77,61 @@ export async function POST(req: Request) {
   }
 }
 
+/* ===================== PUT ===================== */
 export async function PUT(req: Request) {
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "ID missing" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "ID missing" }, { status: 400 });
+    }
 
     const formData = await req.formData();
+
     const title = formData.get("title");
     const price = formData.get("price");
     const old_price = formData.get("old_price");
     const discount = formData.get("discount");
-    const description = formData.get("description"); // ✅ added
+    const description = formData.get("description");
+    const collection_id = formData.get("collection_id"); // ✅ NEW
+
     const image = formData.get("image") as File | null;
 
     if (!title || !price) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    let image_url = null;
+    let image_url: string | null = null;
+
     if (image) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
+
       const fileName = Date.now() + "-" + image.name.replace(/\s/g, "");
       const uploadDir = path.join(process.cwd(), "public/uploads");
       const uploadPath = path.join(uploadDir, fileName);
 
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-      fs.writeFileSync(uploadPath, buffer);
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
 
+      fs.writeFileSync(uploadPath, buffer);
       image_url = `/uploads/${fileName}`;
     }
 
-    let query = "UPDATE services SET title=?, price=?, old_price=?, discount=?, description=?";
-    const params: any[] = [title, price, old_price, discount, description]; // ✅ description included
+    let query = `
+      UPDATE services 
+      SET title=?, price=?, old_price=?, discount=?, description=?, collection_id=?
+    `;
+
+    const params: any[] = [
+      title,
+      price,
+      old_price,
+      discount,
+      description,
+      collection_id || null,
+    ];
 
     if (image_url) {
       query += ", image_url=?";
@@ -107,13 +150,16 @@ export async function PUT(req: Request) {
   }
 }
 
+/* ===================== DELETE ===================== */
 export async function DELETE(req: Request) {
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "ID missing" }, { status: 400 });
 
-    // Soft delete by setting is_active = 0
+    if (!id) {
+      return NextResponse.json({ error: "ID missing" }, { status: 400 });
+    }
+
     await db.query("UPDATE services SET is_active=0 WHERE id=?", [id]);
 
     return NextResponse.json({ success: true });

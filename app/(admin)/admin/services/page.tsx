@@ -38,12 +38,12 @@ export default function ServicesPage() {
     <div className="p-6 max-w-7xl mx-auto">
 
       {/* PAGE TITLE */}
-      <h1 className="text-2xl font-semibold mb-1">
+      {/* <h1 className="text-2xl font-semibold mb-1">
         Services / Energy Plates
       </h1>
       <p className="text-gray-500 mb-6">
         Add slider products for homepage
-      </p>
+      </p> */}
 
       {/* ADD BUTTON */}
       <div className="flex justify-end mb-4">
