@@ -1,4 +1,4 @@
-"use client"; // if using client-side React hooks
+"use client"; // add only if using hooks
 
 import React from "react";
 
@@ -9,8 +9,9 @@ interface PageProps {
 const Page: React.FC<PageProps> = ({ params }) => {
   return (
     <div>
-      <h1>Edit Collection {params.id}</h1>
-      {/* your edit form */}
+      <h1>Edit Collection Page</h1>
+      <p>Collection ID: {params.id}</p>
+      {/* Add your form or content here */}
     </div>
   );
 };
