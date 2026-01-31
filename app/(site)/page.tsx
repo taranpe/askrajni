@@ -7,6 +7,8 @@ import ConsultationServiceCollection from "@/components/home/ConsultationService
 import GemstonesCollection from "@/components/home/GemstonesCollection";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   // 🔹 Fetch banners
   const [banners]: any = await db.query(
