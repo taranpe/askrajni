@@ -15,9 +15,17 @@ export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [editData, setEditData] = useState<Collection | null>(null);
 
+  // Fetch all collections from API
   const loadCollections = async () => {
-    const res = await fetch("/api/collections");
-    setCollections(await res.json());
+    try {
+      const res = await fetch("/api/collections", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to fetch collections");
+
+      const data: Collection[] = await res.json();
+      setCollections(data);
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+    }
   };
 
   useEffect(() => {
@@ -25,8 +33,14 @@ export default function CollectionsPage() {
   }, []);
 
   const deleteCollection = async (id: number) => {
-    await fetch(`/api/collections?id=${id}`, { method: "DELETE" });
-    loadCollections();
+    try {
+      const res = await fetch(`/api/collections?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete collection");
+
+      loadCollections();
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+    }
   };
 
   return (

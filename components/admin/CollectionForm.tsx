@@ -1,86 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-type CollectionFormProps = {
-  defaultData?: any;
-  onSuccess: () => void;
+type Collection = {
+  id: number;
+  name: string;
+  slug?: string;
+  image_url?: string;
 };
 
-export default function CollectionForm({
-  defaultData,
-  onSuccess,
-}: CollectionFormProps) {
+type CollectionFormProps = {
+  defaultData?: Collection | null;
+  onSuccess?: () => void;
+};
+
+export default function CollectionForm({ defaultData = null, onSuccess }: CollectionFormProps) {
   const [name, setName] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (defaultData) {
       setName(defaultData.name);
-      setPreview(defaultData.image_url || null);
-    } else {
-      setName("");
-      setImage(null);
-      setPreview(null);
     }
   }, [defaultData]);
 
-  const submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("name", name);
+    const method = defaultData ? "PUT" : "POST";
+    const idQuery = defaultData ? `?id=${defaultData.id}` : "";
 
-    if (image) {
-      formData.append("image", image);
+    try {
+      const res = await fetch(`/api/collections${idQuery}`, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save collection");
+
+      setName("");
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error(error);
     }
-
-    if (defaultData?.id) {
-      formData.append("id", defaultData.id);
-    }
-
-    await fetch("/api/collections", {
-      method: "POST", // ✅ ALWAYS POST
-      body: formData,
-    });
-
-    setName("");
-    setImage(null);
-    setPreview(null);
-    onSuccess();
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 border p-4 rounded bg-white">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <input
+        type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Collection Name"
-        className="border p-2 w-full"
+        className="border px-2 py-1 rounded w-full"
         required
       />
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0] || null;
-          setImage(file);
-          if (file) setPreview(URL.createObjectURL(file));
-        }}
-        required={!defaultData}
-      />
-
-      {preview && (
-        <img
-          src={preview}
-          className="w-20 h-20 object-cover rounded border"
-        />
-      )}
-
-      <button className="bg-black text-white px-4 py-2 rounded">
-        {defaultData ? "Update Collection" : "Save Collection"}
+      <button
+        type="submit"
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        {defaultData ? "Update Collection" : "Add Collection"}
       </button>
     </form>
   );
