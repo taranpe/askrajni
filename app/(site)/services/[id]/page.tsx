@@ -1,4 +1,5 @@
 // app/(site)/services/[id]/page.tsx
+import { notFound } from "next/navigation";
 import ServiceDetailClient from "./ServiceDetailClient";
 
 export const dynamic = "force-dynamic";
@@ -21,18 +22,27 @@ export default async function ServiceDetailPage({
   const { id } = params;
 
   if (!id) {
-    return <h2 style={{ textAlign: "center" }}>Invalid service</h2>;
+    notFound();
   }
 
-  const res = await fetch(`/api/services/${id}`, {
+  // 🔥 ABSOLUTE URL (THIS FIXES THE ERROR)
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://askrajni.vercel.app";
+
+  const res = await fetch(`${baseUrl}/api/services/${id}`, {
     cache: "no-store",
   });
 
   if (!res.ok) {
-    return <h2 style={{ textAlign: "center" }}>Service not found</h2>;
+    notFound();
   }
 
   const service: Service = await res.json();
+
+  // 🔥 SAFETY GUARD (old /uploads data ke liye)
+  if (!service || !service.id) {
+    notFound();
+  }
 
   return <ServiceDetailClient service={service} />;
 }

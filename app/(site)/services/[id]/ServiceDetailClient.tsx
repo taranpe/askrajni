@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 interface Service {
   id: number;
   title: string;
-  image_url: string;
+  image_url?: string;
   price: number;
   old_price?: number;
   discount?: string;
@@ -20,10 +20,23 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
   const increaseQty = () => setQuantity((q) => q + 1);
   const decreaseQty = () => quantity > 1 && setQuantity((q) => q - 1);
 
-  // 👉 BUY NOW FUNCTION
   const handleBuyNow = () => {
     router.push(`/checkout?serviceId=${service.id}&qty=${quantity}`);
   };
+
+  /* ================= IMAGE SAFETY FIX ================= */
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://askrajni.vercel.app";
+
+  const imageSrc =
+    service.image_url && service.image_url.startsWith("http")
+      ? service.image_url
+      : service.image_url
+      ? `${baseUrl}${service.image_url}`
+      : "https://via.placeholder.com/500x500?text=No+Image";
+
+  /* ==================================================== */
 
   return (
     <div
@@ -40,12 +53,17 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
       {/* ================= LEFT IMAGE ================= */}
       <div style={{ flex: "0 0 460px" }}>
         <img
-          src={service.image_url}
+          src={imageSrc}
           alt={service.title}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src =
+              "https://via.placeholder.com/500x500?text=Image+Not+Available";
+          }}
           style={{
             width: "100%",
             borderRadius: "16px",
             boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+            objectFit: "contain",
           }}
         />
       </div>
@@ -146,7 +164,6 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
             padding: "28px 26px",
             display: "flex",
             gap: "20px",
-            alignItems: "stretch",
             justifyContent: "space-between",
           }}
         >
@@ -156,14 +173,9 @@ export default function ServiceDetailClient({ service }: { service: Service }) {
             text="Free Shipping on all Products"
           />
           <InfoItem
-            img="https://cdn.shopify.com/s/files/1/0732/4637/6250/files/free_shipping_product_key_points_image_6.webp"
+            img="https://cdn.shopify.com/s/files/1/0732/4637/6250/files/prepaid_product_key_points_image_6.webp"
             title="COD Available"
             text="Cash on Delivery"
-          />
-          <InfoItem
-            img="https://cdn.shopify.com/s/files/1/0732/4637/6250/files/prepaid_product_key_points_image_6.webp"
-            title="Prepaid"
-            text="2 Free Rudraksha"
           />
           <InfoItem
             img="https://cdn.shopify.com/s/files/1/0732/4637/6250/files/fast_delivery_product_key_points_image_6.webp"
@@ -220,32 +232,15 @@ function InfoItem({
     <div
       style={{
         flex: 1,
-        minHeight: "140px",
         border: "1px solid rgba(255,255,255,0.35)",
         borderRadius: "14px",
         padding: "20px 14px",
         textAlign: "center",
         color: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        boxSizing: "border-box",
       }}
     >
-      <img
-        src={img}
-        alt={title}
-        style={{
-          width: "42px",
-          height: "42px",
-          marginBottom: "10px",
-          objectFit: "contain",
-        }}
-      />
-      <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px" }}>
-        {title}
-      </div>
+      <img src={img} alt={title} width={42} height={42} />
+      <div style={{ fontWeight: 600 }}>{title}</div>
       <div style={{ fontSize: "13px", opacity: 0.9 }}>{text}</div>
     </div>
   );
