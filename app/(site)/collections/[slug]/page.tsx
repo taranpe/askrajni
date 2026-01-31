@@ -7,10 +7,10 @@ interface PageProps {
 }
 
 export default async function CollectionPage({ params }: PageProps) {
-  const res = await fetch(
-    `http://localhost:3000/api/collections/${params.slug}`,
-    { cache: "no-store" }
-  );
+  // Correct fetch syntax
+  const res = await fetch(`/api/collections/${params.slug}`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     return (
