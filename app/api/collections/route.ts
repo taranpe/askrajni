@@ -1,16 +1,20 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import cloudinary from "@/lib/cloudinary";
 
 /* =========================
    GET – list collections
 ========================= */
 export async function GET() {
-  const [rows] = await db.query(
-    "SELECT * FROM collections ORDER BY id DESC"
-  );
-  return NextResponse.json(rows);
+  try {
+    const [rows]: any = await db.query(
+      "SELECT * FROM collections ORDER BY id DESC"
+    );
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json([], { status: 500 });
+  }
 }
 
 /* =========================
@@ -29,22 +33,30 @@ export async function POST(req: NextRequest) {
 
     const slug = name
       .toLowerCase()
+      .trim()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "");
 
     let image_url: string | null = null;
 
+    /* 🔥 Upload image to Cloudinary */
     if (image && image.size > 0) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      await fs.mkdir(uploadDir, { recursive: true });
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: "askrajni/collections" },
+            (err, result) => {
+              if (err) reject(err);
+              resolve(result);
+            }
+          )
+          .end(buffer);
+      });
 
-      const fileName = `${Date.now()}-${image.name.replace(/\s/g, "")}`;
-      await fs.writeFile(path.join(uploadDir, fileName), buffer);
-
-      image_url = `/uploads/${fileName}`;
+      image_url = uploadResult.secure_url;
     }
 
     await db.query(
@@ -73,8 +85,13 @@ export async function PUT(req: NextRequest) {
     const name = formData.get("name") as string;
     const image = formData.get("image") as File | null;
 
+    if (!name) {
+      return NextResponse.json({ error: "Name required" }, { status: 400 });
+    }
+
     const slug = name
       .toLowerCase()
+      .trim()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "");
 
@@ -84,13 +101,19 @@ export async function PUT(req: NextRequest) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      await fs.mkdir(uploadDir, { recursive: true });
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: "askrajni/collections" },
+            (err, result) => {
+              if (err) reject(err);
+              resolve(result);
+            }
+          )
+          .end(buffer);
+      });
 
-      const fileName = `${Date.now()}-${image.name.replace(/\s/g, "")}`;
-      await fs.writeFile(path.join(uploadDir, fileName), buffer);
-
-      image_url = `/uploads/${fileName}`;
+      image_url = uploadResult.secure_url;
     }
 
     if (image_url) {
@@ -116,12 +139,18 @@ export async function PUT(req: NextRequest) {
    DELETE – delete collection
 ========================= */
 export async function DELETE(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get("id");
+  try {
+    const id = req.nextUrl.searchParams.get("id");
 
-  if (!id) {
-    return NextResponse.json({ error: "ID required" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "ID required" }, { status: 400 });
+    }
+
+    await db.query("DELETE FROM collections WHERE id=?", [id]);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  await db.query("DELETE FROM collections WHERE id=?", [id]);
-  return NextResponse.json({ success: true });
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { db } from "@/lib/db";
+import cloudinary from "@/lib/cloudinary";
 
 /* ===================== GET ===================== */
 export async function GET() {
@@ -29,31 +28,32 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
-    const title = formData.get("title");
-    const price = formData.get("price");
-    const old_price = formData.get("old_price");
-    const discount = formData.get("discount");
-    const description = formData.get("description");
-    const collection_id = formData.get("collection_id"); // ✅ NEW
-
+    const title = formData.get("title") as string;
+    const price = formData.get("price") as string;
+    const old_price = formData.get("old_price") as string;
+    const discount = formData.get("discount") as string;
+    const description = formData.get("description") as string;
+    const collection_id = formData.get("collection_id") as string;
     const image = formData.get("image") as File;
 
     if (!title || !price || !image) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
+    // 🔥 Upload image to Cloudinary
     const bytes = await image.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const fileName = Date.now() + "-" + image.name.replace(/\s/g, "");
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    const uploadPath = path.join(uploadDir, fileName);
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder: "askrajni/services" }, (err, result) => {
+          if (err) reject(err);
+          resolve(result);
+        })
+        .end(buffer);
+    });
 
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    fs.writeFileSync(uploadPath, buffer);
+    const image_url = uploadResult.secure_url;
 
     await db.query(
       `INSERT INTO services 
@@ -61,12 +61,12 @@ export async function POST(req: Request) {
       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
       [
         title,
-        `/uploads/${fileName}`,
+        image_url,
         price,
         old_price,
         discount,
         description,
-        collection_id || null, // ✅ safe
+        collection_id || null,
       ]
     );
 
@@ -82,24 +82,20 @@ export async function PUT(req: Request) {
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
+
     if (!id) {
       return NextResponse.json({ error: "ID missing" }, { status: 400 });
     }
 
     const formData = await req.formData();
 
-    const title = formData.get("title");
-    const price = formData.get("price");
-    const old_price = formData.get("old_price");
-    const discount = formData.get("discount");
-    const description = formData.get("description");
-    const collection_id = formData.get("collection_id"); // ✅ NEW
-
+    const title = formData.get("title") as string;
+    const price = formData.get("price") as string;
+    const old_price = formData.get("old_price") as string;
+    const discount = formData.get("discount") as string;
+    const description = formData.get("description") as string;
+    const collection_id = formData.get("collection_id") as string;
     const image = formData.get("image") as File | null;
-
-    if (!title || !price) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    }
 
     let image_url: string | null = null;
 
@@ -107,16 +103,16 @@ export async function PUT(req: Request) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const fileName = Date.now() + "-" + image.name.replace(/\s/g, "");
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      const uploadPath = path.join(uploadDir, fileName);
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "askrajni/services" }, (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+          })
+          .end(buffer);
+      });
 
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      fs.writeFileSync(uploadPath, buffer);
-      image_url = `/uploads/${fileName}`;
+      image_url = uploadResult.secure_url;
     }
 
     let query = `

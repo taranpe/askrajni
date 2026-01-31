@@ -3,9 +3,9 @@ import { db } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params; // ⭐ MOST IMPORTANT LINE
+  const { id } = params; // ✅ correct
 
   const [rows]: any = await db.query(
     "SELECT * FROM services WHERE id = ? AND is_active = 1",
