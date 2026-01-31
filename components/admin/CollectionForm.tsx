@@ -14,8 +14,12 @@ type CollectionFormProps = {
   onSuccess?: () => void;
 };
 
-export default function CollectionForm({ defaultData = null, onSuccess }: CollectionFormProps) {
+export default function CollectionForm({
+  defaultData = null,
+  onSuccess,
+}: CollectionFormProps) {
   const [name, setName] = useState("");
+  const [image, setImage] = useState<File | null>(null);
 
   useEffect(() => {
     if (defaultData) {
@@ -29,16 +33,22 @@ export default function CollectionForm({ defaultData = null, onSuccess }: Collec
     const method = defaultData ? "PUT" : "POST";
     const idQuery = defaultData ? `?id=${defaultData.id}` : "";
 
+    const formData = new FormData();
+    formData.append("name", name);
+    if (image) {
+      formData.append("image", image);
+    }
+
     try {
       const res = await fetch(`/api/collections${idQuery}`, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: formData, // ✅ JSON nahi, FormData
       });
 
       if (!res.ok) throw new Error("Failed to save collection");
 
       setName("");
+      setImage(null);
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error(error);
@@ -47,14 +57,33 @@ export default function CollectionForm({ defaultData = null, onSuccess }: Collec
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Collection Name */}
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Collection Name"
-        className="border px-2 py-1 rounded w-full"
+        className="border px-3 py-2 rounded w-full"
         required
       />
+
+      {/* Image Upload */}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImage(e.target.files?.[0] || null)}
+        className="border px-3 py-2 rounded w-full"
+      />
+
+      {/* Existing Image Preview (Edit Mode) */}
+      {defaultData?.image_url && !image && (
+        <img
+          src={defaultData.image_url}
+          alt="Collection"
+          className="h-20 rounded border"
+        />
+      )}
+
       <button
         type="submit"
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
